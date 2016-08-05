@@ -1,0 +1,27 @@
+
+    Django Restful Demo
+    ~~~~~~~~~~~~~~~~~~~
+
+    ~ what's it for?
+    Django `restframework` is very hard to start even
+    with rich docs, I try to read the documents three
+    times, after that I just head for the source code
+    of it. This demo use the higher API of the framework
+    to make it DRY.
+
+    ~ what's this project?
+    This demo based on another project and I just use
+    the restful design style, see more about the project
+    here:
+        https://github.com/smileboywtu/django-demo
+
+    ~ what's making it special?
+    1. use router and viewset
+    2. customer response message and code number
+    3. an reusable serializer
+    4. support split page
+    5. serializer tricky
+    6. Good design can be used as template
+
+    ~ license
+    MIT

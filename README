@@ -14,6 +14,10 @@
     the restful design style, see more about the project
     here:
         https://github.com/smileboywtu/django-demo
+        
+    ~ how to make it work?
+    deploy on your local machine, and open the web in your
+    browser, you can see the api map.
 
     ~ what's making it special?
     1. use router and viewset

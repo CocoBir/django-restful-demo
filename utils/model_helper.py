@@ -10,6 +10,8 @@
 
 """
 
+from customer_exceptions import OffsetOutOfRangeException
+
 
 class ListModelHelper(object):
     """get the object list"""
@@ -29,8 +31,11 @@ class ListModelHelper(object):
             sort = 'id'
         order_by = '-' + sort if order != 'asc' else sort
         offset = index * limit
+        # check the offset
+        total = cls.objects.count()
+        if offset > total: raise OffsetOutOfRangeException()
         return {
-            'total': cls.objects.count(),
+            'total': total,
             'datalist': cls.objects.order_by(order_by)\
                 [offset:offset + limit]
         }

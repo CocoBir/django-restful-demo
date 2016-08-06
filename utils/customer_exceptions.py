@@ -34,14 +34,24 @@ class Status(object):
         'db_integrity_err': 72204,  # 破坏数据的完整性
         'db_nexist_err': 72205,     # 指定对象不存在
 
-        'db_referenced_err': 72206  # 数据库有依赖，禁止删除
+        'db_referenced_err': 72206, # 数据库有依赖，禁止删除
+        'index_err': 72207          # 请求的offset超出最大数据里量
     }
+
+
+class OffsetOutOfRangeException(Exception):
+    """index out of range"""
+    def __init__(self):
+        self.code = Status.code['index_err']
+        self.message = 'index value is out of range'
+
 
 class ParamNotEnoughException(Exception):
     """field not exist"""
     def __init__(self, name):
         self.code = Status.code['params_less_err']
         self.message = {name: 'need params.'}
+
 
 class ParamTypeException(Exception):
     """field type error"""

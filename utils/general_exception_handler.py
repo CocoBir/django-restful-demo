@@ -18,6 +18,7 @@ from utils.customer_exceptions import (
     DBRelyOnException, DBIntegrityException,
     DBFieldLengthException, ParamTypeException,
     ParamNotEnoughException, ObjectNotExistException,
+    OffsetOutOfRangeException,
 )
 
 
@@ -38,7 +39,8 @@ def customer_exception_handler(exc, context):
         isinstance(exc, DBFieldLengthException) or \
         isinstance(exc, ParamNotEnoughException) or \
         isinstance(exc, ParamTypeException) or \
-        isinstance(exc, ObjectNotExistException):
+        isinstance(exc, ObjectNotExistException) or \
+        isinstance(exc, OffsetOutOfRangeException):
         response = Response(
             exc.__dict__,
             status=status.HTTP_400_BAD_REQUEST

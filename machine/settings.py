@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
     'EXCEPTION_HANDLER': 'utils.general_exception_handler.customer_exception_handler',
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json'
 }
 
 MIDDLEWARE_CLASSES = [

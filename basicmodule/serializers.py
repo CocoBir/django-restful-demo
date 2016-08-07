@@ -35,8 +35,8 @@ class BasicModuleSerializer(serializers.Serializer,
         override this for using default required check
         by rest framework
         """
-        name = data.get('name', '')
-        description = data.get('description', '')
+        name = data.get('name', u'')
+        description = data.get('description', u'')
         self.validate_name(name)
         self.validate_description(description)
         return {

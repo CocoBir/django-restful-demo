@@ -24,6 +24,7 @@ from environment.models import EnvModules
 from utils.customer_exceptions import (
     DBRelyOnException, ObjectNotExistException,
     DBIntegrityException, ParamNotEnoughException,
+    ParamTypeException,
     IntegrityError, ObjectDoesNotExist
 )
 
@@ -49,8 +50,14 @@ class BasicModuleViewSet(viewsets.ViewSet):
         :param request: rest framework request
         :return:
         """
-        index = request.query_params.get('index', 0)
-        limit = request.query_params.get('limit', 8)
+        try:
+            index = int(request.query_params.get('index', 0))
+        except ValueError:
+            raise ParamTypeException('index')
+        try:
+            limit = int(request.query_params.get('limit', 8))
+        except ValueError:
+            raise ParamTypeException('limit')
         raw = BasicModule.list(index=index, limit=limit)
         serializer = BasicModuleSerializer(raw['datalist'], many=True)
         raw['datalist'] = serializer.data
@@ -74,7 +81,10 @@ class BasicModuleViewSet(viewsets.ViewSet):
             instance = BasicModule.objects.create(
                 **serializer.validated_data)
             instance.save()
-            return Response(serializer.data)
+            # must create new serializer
+            return Response(
+                BasicModuleSerializer(instance).data
+            )
 
     def retrieve(self, request, pk=None):
         """
@@ -108,13 +118,18 @@ class BasicModuleViewSet(viewsets.ViewSet):
             raise ObjectNotExistException(pk)
         serializer = BasicModuleSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            instance.name = serializer.validated_data['name']
-            instance.description = serializer.validated_data['description']
+            instance.name = serializer.validated_data['name'] \
+                or instance.name
+            instance.description = serializer.validated_data['description']\
+                or instance.description
             try:
                 instance.save()
             except IntegrityError:
                 raise DBIntegrityException(instance.name)
-            return Response(serializer.data)
+            # return save data
+            return Response(
+                BasicModuleSerializer(instance).data
+            )
 
     def partial_update(self, request, pk=None):
         """

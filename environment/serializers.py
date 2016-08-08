@@ -13,19 +13,19 @@
 """
 
 import json
+
 from rest_framework import serializers
-from models import Environments
 
 from basicmodule.models import BasicModule
 from basicmodule.serializers import BasicModuleSerializer
-
+from models import Environments
+from utils.customer_exceptions import (
+    ParamNotEnoughException, ObjectDoesNotExist,
+    ObjectNotExistException
+)
 from utils.validators import (
     NameLenValidator, DspLenValidator,
     IdTypeValidator, ConfigTypeValidator
-)
-
-from utils.customer_exceptions import (
-    ObjectDoesNotExist, ObjectNotExistException,
 )
 
 
@@ -55,14 +55,25 @@ class EnvironmentSerializer(serializers.Serializer,
         """
         check value exist and value legal
         """
-        name = data.get('name', '')
-        description = data.get('description', '')
+        # valid data
+        valid_data = {}
+
+        try:
+            name = data['name']
+        except KeyError:
+            raise ParamNotEnoughException('name')
         self.validate_name(name)
-        self.validate_description(description)
-        return {
-            'name': name,
-            'description': description
-        }
+        valid_data.update(name=name)
+
+        try:
+            description = data['description']
+        except KeyError:
+            description = None
+        if description:
+            self.validate_description(description)
+            valid_data.update(description=description)
+
+        return valid_data
 
 
 class EnvironmentModuleSerializer(serializers.Serializer,
@@ -74,7 +85,7 @@ class EnvironmentModuleSerializer(serializers.Serializer,
     name = serializers.CharField()
     moduleID = BasicModuleSerializer()
     envID = EnvironmentSerializer()
-    config = serializers.CharField()
+    config = serializers.CharField(required=False)
 
     def to_internal_value(self, data):
         """
@@ -84,24 +95,47 @@ class EnvironmentModuleSerializer(serializers.Serializer,
         we need to get the envID instance by pk
         we need to check the data by hand
         """
-        name = data.get('name', None)
-        env_id = data.get('envID', None)
-        module_id = data.get('moduleID', None)
-        config = data.get('config', {})
-        # validate before return
-        self.validate_id(env_id)
-        self.validate_id(module_id)
+        valid_data = {}
+
+        # deal with name
+        try:
+            name = data['name']
+        except KeyError:
+            raise ParamNotEnoughException('name')
         self.validate_name(name)
-        self.validate_config(config)
+        valid_data.update(name=name)
+
+        # deal with envID
+        try:
+            env_id = data['envID']
+        except KeyError:
+            raise ParamNotEnoughException('envID')
+        self.validate_id(env_id)
         try:
             envID = Environments.objects.get(id=env_id)
+        except ObjectDoesNotExist:
+            raise ObjectNotExistException(env_id)
+        valid_data.update(envID=envID)
+
+        # deal with moduleID
+        try:
+            module_id = data['moduleID']
+        except KeyError:
+            raise ParamNotEnoughException('moduleID')
+        self.validate_id(module_id)
+        try:
             moduleID = BasicModule.objects.get(id=module_id)
-        except ObjectDoesNotExist as e:
-            raise ObjectNotExistException(e.args[0].split()[0])
-        # construct this your own if the user post many fields
-        return {
-            'name': name,
-            'moduleID': moduleID,
-            'envID':envID,
-            'config': json.dumps(config)
-        }
+        except ObjectDoesNotExist:
+            raise ObjectNotExistException(module_id)
+        valid_data.update(moduleID=module_id)
+
+        # no required config
+        try:
+            config = data['config']
+        except KeyError:
+            config = None
+        if config:
+            self.validate_config(config)
+            valid_data.update(config=json.dumps(config))
+
+        return valid_data

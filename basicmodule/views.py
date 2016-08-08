@@ -10,17 +10,13 @@
 
 """
 
+from rest_framework import permissions
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework import permissions
 from rest_framework.response import Response
 
 from models import BasicModule
 from serializers import BasicModuleSerializer
-
-from version.models import VerModules
-from environment.models import EnvModules
-
 from utils.customer_exceptions import (
     DBRelyOnException, ObjectNotExistException,
     DBIntegrityException, ParamNotEnoughException,
@@ -79,7 +75,8 @@ class BasicModuleViewSet(viewsets.ViewSet):
             if exists: raise DBIntegrityException(
                 serializer.validated_data['name'])
             instance = BasicModule.objects.create(
-                **serializer.validated_data)
+                **serializer.validated_data
+            )
             instance.save()
             # must create new serializer
             return Response(
@@ -118,10 +115,11 @@ class BasicModuleViewSet(viewsets.ViewSet):
             raise ObjectNotExistException(pk)
         serializer = BasicModuleSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            instance.name = serializer.validated_data['name'] \
-                or instance.name
-            instance.description = serializer.validated_data['description']\
-                or instance.description
+            instance.name = serializer.validated_data['name']
+            instance.description = serializer.validated_data.get(
+                'description',
+                instance.description
+            )
             try:
                 instance.save()
             except IntegrityError:
@@ -159,8 +157,9 @@ class BasicModuleViewSet(viewsets.ViewSet):
         except ObjectDoesNotExist:
             raise ObjectNotExistException(pk)
         # check if the instance be referenced
-        rely =  0 if len(EnvModules.objects.filter(moduleID=instance)[:1]) == 0 and \
-                     len(VerModules.objects.filter(moduleID=instance)[:1]) == 0 else 1
+        rely = instance.vers.count() or instance.envs.count()
+        # rely =  0 if len(EnvModules.objects.filter(moduleID=instance)[:1]) == 0 and \
+        #              len(VerModules.objects.filter(moduleID=instance)[:1]) == 0 else 1
         if rely:
             raise DBRelyOnException(pk)
         else:

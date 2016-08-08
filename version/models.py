@@ -11,8 +11,8 @@
 """
 
 from django.db import models
-from basicmodule.models import BasicModule
 
+from basicmodule.models import BasicModule
 from utils.model_helper import GenericModelHelper
 
 
@@ -20,7 +20,7 @@ class Versions(models.Model,
                GenericModelHelper):
     """存储版本信息"""
     name = models.CharField(max_length=32, unique=True)
-    description = models.CharField(max_length=200)
+    description = models.CharField(max_length=200, default="")
 
 
 class VerModules(models.Model,
@@ -30,7 +30,8 @@ class VerModules(models.Model,
     moduleID = models.ForeignKey(
         BasicModule,
         db_column='moduleID',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='vers'
     )
     verID = models.ForeignKey(
         Versions,
@@ -38,4 +39,4 @@ class VerModules(models.Model,
         on_delete=models.CASCADE,
         related_name='entries'
     )
-    config = models.TextField()
+    config = models.TextField(default="{}")

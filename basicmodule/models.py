@@ -11,10 +11,11 @@
 """
 
 from django.db import models
+
 from utils.model_helper import GenericModelHelper
 
 
 class BasicModule(models.Model,
                   GenericModelHelper):
     name = models.CharField(max_length=32, unique=True, blank=False)
-    description = models.CharField(max_length=200)
+    description = models.CharField(max_length=200, default="")

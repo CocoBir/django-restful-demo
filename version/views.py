@@ -10,16 +10,15 @@
 
 """
 
+from rest_framework import permissions
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework import permissions
 from rest_framework.response import Response
 
 from models import Versions, VerModules
 from serializers import (
     VersionSerializer, VersionModuleSerializer,
 )
-
 from utils.customer_exceptions import (
     ObjectNotExistException, DBIntegrityException,
     ParamNotEnoughException, IntegrityError,
@@ -113,7 +112,10 @@ class VersionViewSet(viewsets.ViewSet):
         serializer = VersionSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             instance.name = serializer.validated_data['name']
-            instance.description = serializer.validated_data['description']
+            instance.description = serializer.validated_data.get(
+                'description',
+                instance.description
+            )
             try:
                 instance.save()
             except IntegrityError:
@@ -238,7 +240,10 @@ class VerModuleViewSet(viewsets.ViewSet):
             instance.name = serializer.validated_data['name']
             instance.verID = serializer.validated_data['verID']
             instance.moduleID = serializer.validated_data['moduleID']
-            instance.description = serializer.validated_data['config']
+            instance.config = serializer.validated_data.get(
+                'config',
+                instance.config
+            )
             try:
                 instance.save()
             except IntegrityError:

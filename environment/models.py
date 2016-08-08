@@ -20,7 +20,7 @@ class Environments(models.Model,
                    GenericModelHelper):
     """存储环境信息"""
     name = models.CharField(max_length=32, unique=True, blank=False)
-    description = models.CharField(max_length=200)
+    description = models.CharField(max_length=200, default="")
 
 
 class EnvModules(models.Model,
@@ -30,7 +30,8 @@ class EnvModules(models.Model,
     moduleID = models.ForeignKey(
         BasicModule,
         db_column='moduleID',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='envs'
     )
     envID = models.ForeignKey(
         Environments,
@@ -38,5 +39,4 @@ class EnvModules(models.Model,
         on_delete=models.CASCADE,
         related_name='entries' # use for select with environment to get all moduels
     )
-    config = models.TextField()
-
+    config = models.TextField(default="{}")

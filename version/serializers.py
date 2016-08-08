@@ -13,19 +13,19 @@
 """
 
 import json
+
 from rest_framework import serializers
-from models import Versions
 
 from basicmodule.models import BasicModule
 from basicmodule.serializers import BasicModuleSerializer
-
+from models import Versions
+from utils.customer_exceptions import (
+    ParamNotEnoughException,
+    ObjectDoesNotExist, ObjectNotExistException,
+)
 from utils.validators import (
     NameLenValidator, DspLenValidator,
     IdTypeValidator, ConfigTypeValidator
-)
-
-from utils.customer_exceptions import (
-    ObjectDoesNotExist, ObjectNotExistException,
 )
 
 
@@ -55,14 +55,24 @@ class VersionSerializer(serializers.Serializer,
         """
         check value exist and value legal
         """
-        name = data.get('name', '')
-        description = data.get('description', '')
+        valid_data = {}
+
+        try:
+            name = data['name']
+        except KeyError:
+            raise ParamNotEnoughException('name')
         self.validate_name(name)
-        self.validate_description(description)
-        return {
-            'name': name,
-            'description': description
-        }
+        valid_data.update(name=name)
+
+        try:
+            description = data['description']
+        except KeyError:
+            description = None
+        if description:
+            self.validate_description(description)
+            valid_data.update(description=description)
+
+        return valid_data
 
 
 class VersionModuleSerializer(serializers.Serializer,
@@ -84,24 +94,47 @@ class VersionModuleSerializer(serializers.Serializer,
         we need to get the verID instance by pk
         we need to check the data by hand
         """
-        name = data.get('name', None)
-        ver_id = data.get('verID', None)
-        module_id = data.get('moduleID', None)
-        config = data.get('config', {})
-        # validate before return
-        self.validate_id(ver_id)
-        self.validate_id(module_id)
+        valid_data = {}
+
+        # deal with name
+        try:
+            name = data['name']
+        except KeyError:
+            raise ParamNotEnoughException('name')
         self.validate_name(name)
-        self.validate_config(config)
+        valid_data.update(name=name)
+
+        # deal with version
+        try:
+            ver_id = data['verID']
+        except KeyError:
+            raise ParamNotEnoughException('verID')
+        self.validate_id(ver_id)
         try:
             verID = Versions.objects.get(id=ver_id)
+        except ObjectDoesNotExist:
+            raise ObjectNotExistException(ver_id)
+        valid_data.update(verID=ver_id)
+
+        # deal with module
+        try:
+            module_id = data['moduleID']
+        except KeyError:
+            raise ParamNotEnoughException('moduleID')
+        self.validate_id(module_id)
+        try:
             moduleID = BasicModule.objects.get(id=module_id)
-        except ObjectDoesNotExist as e:
-            raise ObjectNotExistException(e.args[0].split()[0])
-        # construct this your own if the user post many fields
-        return {
-            'name': name,
-            'moduleID': moduleID,
-            'verID':verID,
-            'config': json.dumps(config)
-        }
+        except ObjectDoesNotExist:
+            raise ObjectNotExistException(module_id)
+        valid_data.update(moduleID=moduleID)
+
+        # deal with config
+        try:
+            config = data['config']
+        except KeyError:
+            config = None
+        if config:
+            self.validate_config(config)
+            valid_data.update(config=json.dumps(config))
+
+        return valid_data

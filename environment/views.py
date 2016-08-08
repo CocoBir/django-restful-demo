@@ -10,20 +10,19 @@
 
 """
 
+from rest_framework import permissions
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework import permissions
 from rest_framework.response import Response
 
 from models import Environments, EnvModules
 from serializers import (
     EnvironmentSerializer, EnvironmentModuleSerializer,
 )
-
 from utils.customer_exceptions import (
     ObjectNotExistException, DBIntegrityException,
     ParamNotEnoughException, IntegrityError,
-    ObjectDoesNotExist,
+    ObjectDoesNotExist, ParamTypeException
 )
 
 
@@ -48,8 +47,14 @@ class EnvironmentViewSet(viewsets.ViewSet):
         :param request: rest framework request
         :return:
         """
-        index = request.query_params.get('index', 0)
-        limit = request.query_params.get('limit', 8)
+        try:
+            index = int(request.query_params.get('index', 0))
+        except ValueError:
+            raise ParamTypeException('index')
+        try:
+            limit = int(request.query_params.get('limit', 8))
+        except ValueError:
+            raise ParamTypeException('limit')
         raw = Environments.list(index=index, limit=limit)
         serializer = EnvironmentSerializer(raw['datalist'], many=True)
         raw['datalist'] = serializer.data
@@ -75,7 +80,10 @@ class EnvironmentViewSet(viewsets.ViewSet):
                 **serializer.validated_data
             )
             instance.save()
-            return Response(serializer.data)
+            # return saved data
+            return Response(
+                EnvironmentSerializer(instance).data
+            )
 
     def retrieve(self, request, pk=None):
         """
@@ -112,12 +120,17 @@ class EnvironmentViewSet(viewsets.ViewSet):
         serializer = EnvironmentSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             instance.name = serializer.validated_data['name']
-            instance.description = serializer.validated_data['description']
+            instance.description = serializer.validated_data.get(
+                'description',
+                instance.description
+            )
             try:
                 instance.save()
             except IntegrityError:
                 raise DBIntegrityException(instance.name)
-            return Response(serializer.data)
+            return Response(
+                EnvironmentSerializer(instance).data
+            )
 
     def partial_update(self, request, pk=None):
         """
@@ -173,8 +186,14 @@ class EnvModuleViewSet(viewsets.ViewSet):
         :param request: rest framework request
         :return:
         """
-        index = request.query_params.get('index', 0)
-        limit = request.query_params.get('limit', 8)
+        try:
+            index = int(request.query_params.get('index', 0))
+        except ValueError:
+            raise ParamTypeException('index')
+        try:
+            limit = int(request.query_params.get('limit', 8))
+        except ValueError:
+            raise ParamTypeException('limit')
         raw = EnvModules.list(index=index, limit=limit)
         serializer = EnvironmentModuleSerializer(raw['datalist'], many=True)
         raw['datalist'] = serializer.data
@@ -200,7 +219,9 @@ class EnvModuleViewSet(viewsets.ViewSet):
                 **serializer.validated_data
             )
             instance.save()
-            return Response(serializer.data)
+            return Response(
+                EnvironmentModuleSerializer(instance).data
+            )
 
     def retrieve(self, request, pk=None):
         """
@@ -237,12 +258,17 @@ class EnvModuleViewSet(viewsets.ViewSet):
             instance.name = serializer.validated_data['name']
             instance.envID = serializer.validated_data['envID']
             instance.moduleID = serializer.validated_data['moduleID']
-            instance.description = serializer.validated_data['config']
+            instance.config = serializer.validated_data.get(
+                'config',
+                instance.config
+            )
             try:
                 instance.save()
             except IntegrityError:
                 raise DBIntegrityException(instance.name)
-            return Response(serializer.data)
+            return Response(
+                EnvironmentModuleSerializer(instance).data
+            )
 
     def partial_update(self, request, pk=None):
         """

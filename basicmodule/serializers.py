@@ -14,7 +14,7 @@ from rest_framework import serializers
 
 from utils.validators import (
     NameLenValidator, DspLenValidator,
-    IdTypeValidator
+    IdTypeValidator, ParamNotEnoughException
 )
 
 class BasicModuleSerializer(serializers.Serializer,
@@ -35,11 +35,22 @@ class BasicModuleSerializer(serializers.Serializer,
         override this for using default required check
         by rest framework
         """
-        name = data.get('name', u'')
-        description = data.get('description', u'')
+        valid_data = {}
+        # deal with the name
+        try:
+            name = data['name']
+        except KeyError:
+            raise ParamNotEnoughException('name')
         self.validate_name(name)
-        self.validate_description(description)
-        return {
-            'name': name,
-            'description': description
-        }
+        valid_data.update(name=name)
+
+        # deal with the description
+        try:
+            description = data['description']
+        except KeyError:
+            description = None
+        if description:
+            self.validate_description(description)
+            valid_data.update(description=description)
+
+        return valid_data

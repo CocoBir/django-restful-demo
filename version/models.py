@@ -22,6 +22,9 @@ class Versions(models.Model,
     name = models.CharField(max_length=32, unique=True)
     description = models.CharField(max_length=200, default="")
 
+    class Meta:
+        db_table = "Versions"
+
 
 class VerModules(models.Model,
                  GenericModelHelper):
@@ -40,3 +43,6 @@ class VerModules(models.Model,
         related_name='entries'
     )
     config = models.TextField(default="{}")
+
+    class Meta:
+        db_table = "VerModules"

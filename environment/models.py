@@ -22,6 +22,9 @@ class Environments(models.Model,
     name = models.CharField(max_length=32, unique=True, blank=False)
     description = models.CharField(max_length=200, default="")
 
+    class Meta:
+        db_table = "Environments"
+
 
 class EnvModules(models.Model,
                  GenericModelHelper):
@@ -40,3 +43,6 @@ class EnvModules(models.Model,
         related_name='entries' # use for select with environment to get all moduels
     )
     config = models.TextField(default="{}")
+
+    class Meta:
+        db_table = "EnvModules"
